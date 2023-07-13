@@ -25,17 +25,20 @@ def perform_task(df, task, plot_height=None, plot_width=None):
         st.write('Cleaned Data:')
         st.write(df)
     elif task in ['Plot Bar Graph', 'Plot Line Graph']:
-        columns_to_select = st.multiselect("Choose two columns", df.columns, default=df.columns[:2])
-        if len(columns_to_select) != 2:
-            st.warning("Please select exactly two columns.")
-        else:
-            kind = 'bar' if task == 'Plot Bar Graph' else 'line'
-            fig, ax = plt.subplots(figsize=(plot_width, plot_height))
-            df[columns_to_select].plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
-            plt.xlabel(columns_to_select[0])
-            plt.ylabel(columns_to_select[1])
-            plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
-            st.pyplot(fig)
+        try:
+            columns_to_select = st.multiselect("Choose two columns", df.columns, default=df.columns[:2])
+            if len(columns_to_select) != 2:
+                st.warning("Please select exactly two columns.")
+            else:
+                kind = 'bar' if task == 'Plot Bar Graph' else 'line'
+                fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+                df[columns_to_select].plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+                plt.xlabel(columns_to_select[0])
+                plt.ylabel(columns_to_select[1])
+                plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
+                st.pyplot(fig)
+        except Exception as e:
+            st.error(f"An error occurred: {str(e)}")
     elif task == 'Compare Two Columns':
         columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
         if len(columns_to_select) != 2:

@@ -4,7 +4,7 @@ import streamlit as st
 from datetime import datetime
 import pytz
 
-def perform_task(df, task, plot_height, plot_width):
+def perform_task(df, task, plot_height=None, plot_width=None):
     if task == 'Show First Rows':
         st.write(df.head())
     elif task == 'Show Last Rows':
@@ -54,11 +54,12 @@ def main():
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-    st.sidebar.header('Dashboard `version 2`')
+    st.sidebar.header('Dashboard')
     
     st.sidebar.subheader('Graph parameters')
     plot_height = st.sidebar.slider('Specify plot height', 200, 500, 250)
     plot_width = st.sidebar.slider('Specify plot width', 200, 800, 400)
+    bulk_analysis = st.sidebar.checkbox('Perform all tasks')
 
     st.title("Data Analysis App")
     st.markdown("""
@@ -82,13 +83,27 @@ def main():
                  'Show Missing Value Counts', 'Delete Rows With Missing Values', 'Plot Bar Graph', 
                  'Plot Line Graph', 'Compare Two Columns']
         st.markdown("## Choose an Analysis Task")
-        task = st.selectbox("", tasks)
-        perform_task(df, task, plot_height, plot_width)
+        if bulk_analysis:
+            for task in tasks:
+                st.markdown(f"### {task}")
+                if task in ['Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']:
+                    perform_task(df, task, plot_height, plot_width)
+                else:
+                    perform_task(df, task)
+        else:
+            task = st.selectbox("", tasks)
+            if task in ['Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']:
+                perform_task(df, task, plot_height, plot_width)
+            else:
+                perform_task(df, task)
         
         st.markdown("## Enter a Custom Analysis Task")
         manual_task = st.text_input("")
         if manual_task:
-            perform_task(df, manual_task, plot_height, plot_width)
+            if manual_task in ['Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']:
+                perform_task(df, manual_task, plot_height, plot_width)
+            else:
+                perform_task(df, manual_task)
 
 if __name__ == "__main__":
     main()

@@ -1,10 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
-from datetime import datetime
-import pytz
 
-def perform_task(df, task, plot_height=None, plot_width=None):
+def perform_task(df, task, plot_height, plot_width):
     if task == 'Show First Rows':
         st.write(df.head())
     elif task == 'Show Last Rows':
@@ -30,13 +28,16 @@ def perform_task(df, task, plot_height=None, plot_width=None):
             if len(columns_to_select) != 2:
                 st.warning("Please select exactly two columns.")
             else:
-                kind = 'bar' if task == 'Plot Bar Graph' else 'line'
-                fig, ax = plt.subplots(figsize=(plot_width, plot_height))
-                df[columns_to_select].plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
-                plt.xlabel(columns_to_select[0])
-                plt.ylabel(columns_to_select[1])
-                plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
-                st.pyplot(fig)
+                if pd.api.types.is_numeric_dtype(df[columns_to_select[0]]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]]):
+                    kind = 'bar' if task == 'Plot Bar Graph' else 'line'
+                    fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+                    df[columns_to_select].plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+                    plt.xlabel(columns_to_select[0])
+                    plt.ylabel(columns_to_select[1])
+                    plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
+                    st.pyplot(fig)
+                else:
+                    st.warning("Both selected columns must be numeric for plotting.")
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
     elif task == 'Compare Two Columns':
@@ -62,7 +63,6 @@ def main():
     st.sidebar.subheader('Graph parameters')
     plot_height = st.sidebar.slider('Specify plot height', 200, 500, 250)
     plot_width = st.sidebar.slider('Specify plot width', 200, 800, 400)
-    bulk_analysis = st.sidebar.checkbox('Perform all tasks')
 
     st.title("Data Analysis App")
     st.markdown("""
@@ -86,27 +86,13 @@ def main():
                  'Show Missing Value Counts', 'Delete Rows With Missing Values', 'Plot Bar Graph', 
                  'Plot Line Graph', 'Compare Two Columns']
         st.markdown("## Choose an Analysis Task")
-        if bulk_analysis:
-            for task in tasks:
-                st.markdown(f"### {task}")
-                if task in ['Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']:
-                    perform_task(df, task, plot_height, plot_width)
-                else:
-                    perform_task(df, task)
-        else:
-            task = st.selectbox("", tasks)
-            if task in ['Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']:
-                perform_task(df, task, plot_height, plot_width)
-            else:
-                perform_task(df, task)
+        task = st.selectbox("", tasks)
+        perform_task(df, task, plot_height, plot_width)
         
         st.markdown("## Enter a Custom Analysis Task")
         manual_task = st.text_input("")
         if manual_task:
-            if manual_task in ['Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']:
-                perform_task(df, manual_task, plot_height, plot_width)
-            else:
-                perform_task(df, manual_task)
+            perform_task(df, manual_task, plot_height, plot_width)
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@ import streamlit as st
 from datetime import datetime
 import pytz
 
-def perform_task(df, task):
+def perform_task(df, task, plot_height, plot_width):
     if task == 'Show First Rows':
         st.write(df.head())
     elif task == 'Show Last Rows':
@@ -25,41 +25,40 @@ def perform_task(df, task):
         st.write('Cleaned Data:')
         st.write(df)
     elif task in ['Plot Bar Graph', 'Plot Line Graph']:
-        columns_to_select = st.sidebar.multiselect("Choose two columns", df.columns, default=df.columns[:2])
-        plot_height = st.sidebar.slider('Specify plot height', 200, 500, 250)
-        plot_width = st.sidebar.slider('Specify plot width', 200, 500, 250)
+        columns_to_select = st.multiselect("Choose two columns", df.columns, default=df.columns[:2])
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns.")
         else:
             kind = 'bar' if task == 'Plot Bar Graph' else 'line'
-            plt.figure(figsize=(plot_width/100, plot_height/100))  # Adjusting the size of the plot using the sliders
-            df[columns_to_select].plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1])
+            fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+            df[columns_to_select].plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
             plt.xlabel(columns_to_select[0])
             plt.ylabel(columns_to_select[1])
             plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
-            st.pyplot(plt)
+            st.pyplot(fig)
     elif task == 'Compare Two Columns':
-        columns_to_select = st.sidebar.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
+        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns for comparison.")
         else:
-            df.plot(kind='scatter', x=columns_to_select[0], y=columns_to_select[1])
+            fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+            df.plot(kind='scatter', x=columns_to_select[0], y=columns_to_select[1], ax=ax)
             plt.title(f"Comparison between {columns_to_select[0]} and {columns_to_select[1]}")
-            st.pyplot(plt)
+            st.pyplot(fig)
     else:
         st.error(f"Command '{task}' not recognized.")
 
 def main():
     st.set_page_config(layout='wide', initial_sidebar_state='expanded')
-
+    
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-        
-    st.sidebar.header('Dashboard `version 2`')
-    st.sidebar.markdown('Text description goes here')
 
-    st.sidebar.subheader('Line/Bar chart parameters')
-    plot_data = st.sidebar.multiselect('Select data', ['temp_min', 'temp_max'], ['temp_min', 'temp_max'])
+    st.sidebar.header('Dashboard `version 2`')
+    
+    st.sidebar.subheader('Graph parameters')
+    plot_height = st.sidebar.slider('Specify plot height', 200, 500, 250)
+    plot_width = st.sidebar.slider('Specify plot width', 200, 800, 400)
 
     st.title("Data Analysis App")
     st.markdown("""
@@ -84,18 +83,12 @@ def main():
                  'Plot Line Graph', 'Compare Two Columns']
         st.markdown("## Choose an Analysis Task")
         task = st.selectbox("", tasks)
-        perform_task(df, task)
+        perform_task(df, task, plot_height, plot_width)
         
         st.markdown("## Enter a Custom Analysis Task")
         manual_task = st.text_input("")
         if manual_task:
-            perform_task(df, manual_task)
-
-    # Display current date and time in Norway timezone
-    oslo = pytz.timezone('Europe/Oslo')
-    oslo_time = datetime.now(oslo)
-    st.sidebar.markdown("### Date and Time")
-    st.sidebar.text(f"Oslo, Norway: {oslo_time.strftime('%Y-%m-%d %H:%M:%S')}")
+            perform_task(df, manual_task, plot_height, plot_width)
 
 if __name__ == "__main__":
     main()

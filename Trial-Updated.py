@@ -31,7 +31,7 @@ def perform_task(df, task, plot_height, plot_width):
                 if pd.api.types.is_numeric_dtype(df[columns_to_select[0]]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]]):
                     kind = 'bar' if task == 'Plot Bar Graph' else 'line'
                     fig, ax = plt.subplots(figsize=(plot_width, plot_height))
-                    df[columns_to_select].plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+                    df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
                     plt.xlabel(columns_to_select[0])
                     plt.ylabel(columns_to_select[1])
                     plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")

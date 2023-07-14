@@ -72,8 +72,9 @@ def main():
     st.sidebar.header('Dashboard')
     
     st.sidebar.subheader('Graph parameters')
-    plot_height = st.sidebar.slider('Specify plot height', 200, 500, 250)
-    plot_width = st.sidebar.slider('Specify plot width', 200, 800, 400)
+    plot_height = st.sidebar.slider('Specify plot height', 2, 5, 2.5)  # Adjusted range
+    plot_width = st.sidebar.slider('Specify plot width', 2, 8, 4)  # Adjusted range
+
 
 #section 3
 

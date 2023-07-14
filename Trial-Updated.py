@@ -1,14 +1,15 @@
+#section 1 
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 
+#section 2
+
 def clean_data(df):
-    for col in df.columns:
-        df[col] = pd.to_numeric(df[col], errors='ignore')
-        if df[col].dtype == object:
-            # Try to convert percentages to floats
-            if df[col].str.contains('%').any():
-                df[col] = df[col].str.rstrip('%').astype('float') / 100.0
+    df = df.apply(pd.to_numeric, errors='coerce')  # Convert all columns to numeric
+    df = df.dropna(how='all')  # Remove rows where all values are NaN
+    df = df.dropna(axis=1, how='all')  # Remove columns where all values are NaN
     return df
 
 def perform_task(df, task, plot_height, plot_width):
@@ -32,7 +33,11 @@ def perform_task(df, task, plot_height, plot_width):
         st.write('Cleaned Data:')
         st.write(df)
     elif task in ['Plot Bar Graph', 'Plot Line Graph']:
-        columns_to_select = st.multiselect("Choose two columns", df.columns, default=df.columns[:2])
+        if len(df.columns) >= 2:
+            default_columns = df.columns[:2].tolist()
+        else:
+            default_columns = df.columns.tolist()
+        columns_to_select = st.multiselect("Choose two columns", df.columns, default=default_columns)
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns.")
         else:
@@ -70,6 +75,8 @@ def main():
     plot_height = st.sidebar.slider('Specify plot height', 200, 500, 250)
     plot_width = st.sidebar.slider('Specify plot width', 200, 800, 400)
 
+#section 3
+
     st.title("Data Analysis App")
     st.markdown("""
     This Web App is a tool for carrying out fundamental data analysis operations on a CSV or Excel file, it is meant to speed up the process.
@@ -99,7 +106,8 @@ def main():
             st.error("This file type isn't supported.")
             return
 
-        # Clean the data
+#section 4
+
         df = clean_data(df)
 
         st.markdown("## Uploaded Data")

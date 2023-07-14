@@ -1,11 +1,9 @@
-#section 1 
-
+# section 1 
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 
-#section 2
-
+# section 2
 def clean_data(df):
     df = df.apply(pd.to_numeric, errors='coerce')  # Convert all columns to numeric
     df = df.dropna(how='all')  # Remove rows where all values are NaN
@@ -72,12 +70,10 @@ def main():
     st.sidebar.header('Dashboard')
     
     st.sidebar.subheader('Graph parameters')
-    plot_height = st.sidebar.slider('Specify plot height', 2, 5, 2.5)  # Adjusted range
-    plot_width = st.sidebar.slider('Specify plot width', 2, 8, 4)  # Adjusted range
+    plot_height = st.sidebar.slider('Specify plot height', 2.0, 5.0, 2.5)  # Adjusted range
+    plot_width = st.sidebar.slider('Specify plot width', 2.0, 8.0, 4.0)  # Adjusted range
 
-
-#section 3
-
+# section 3
     st.title("Data Analysis App")
     st.markdown("""
     This Web App is a tool for carrying out fundamental data analysis operations on a CSV or Excel file, it is meant to speed up the process.
@@ -107,20 +103,19 @@ def main():
             st.error("This file type isn't supported.")
             return
 
-#section 4
-
+# section 4
         df = clean_data(df)
 
         st.markdown("## Uploaded Data")
         st.write(df)
 
-        tasks = ['Show First Rows', 'Show Last Rows', 'Show Columns', 'Show Dimensions', 'Show Summary', 
-                 'Show Missing Value Counts', 'Delete Rows With Missing Values', 'Plot Bar Graph', 
+        tasks = ['Show First Rows', 'Show Last Rows', 'Show Columns', 'Show Dimensions', 'Show Summary',
+                 'Show Missing Value Counts', 'Delete Rows With Missing Values', 'Plot Bar Graph',
                  'Plot Line Graph', 'Compare Two Columns']
         st.markdown("## Choose an Analysis Task")
         task = st.selectbox("", tasks)
         perform_task(df, task, plot_height, plot_width)
-        
+
         st.markdown("## Enter a Custom Analysis Task")
         manual_task = st.text_input("")
         if manual_task:
@@ -128,5 +123,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

@@ -2,6 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 
+
+
 def perform_task(df, task, plot_height, plot_width):
     if task == 'Show First Rows':
         st.write(df.head())
@@ -16,7 +18,7 @@ def perform_task(df, task, plot_height, plot_width):
     elif task == 'Show Missing Value Counts':
         st.write(df.isna().sum())
     elif task == 'Delete Rows With Missing Values':
-        missing_rows = df[df.isna().any(axis=1)]
+        missing_rows = df.loc[df.isna().any(axis=1), :]
         st.write('Deleted Rows:')
         st.write(missing_rows)
         df.dropna(inplace=True)
@@ -28,7 +30,7 @@ def perform_task(df, task, plot_height, plot_width):
             if len(columns_to_select) != 2:
                 st.warning("Please select exactly two columns.")
             else:
-                if pd.api.types.is_numeric_dtype(df[columns_to_select[0]]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]]):
+                if pd.api.types.is_numeric_dtype(df[columns_to_select[0]].iloc[0]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]].iloc[0]):
                     kind = 'bar' if task == 'Plot Bar Graph' else 'line'
                     fig, ax = plt.subplots(figsize=(plot_width, plot_height))
                     df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
@@ -51,6 +53,9 @@ def perform_task(df, task, plot_height, plot_width):
             st.pyplot(fig)
     else:
         st.error(f"Command '{task}' not recognized.")
+
+
+
 
 def main():
     st.set_page_config(layout='wide', initial_sidebar_state='expanded')

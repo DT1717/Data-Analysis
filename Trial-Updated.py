@@ -2,6 +2,15 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 
+def clean_data(df):
+    for col in df.columns:
+        df[col] = pd.to_numeric(df[col], errors='ignore')
+        if df[col].dtype == object:
+            # Try to convert percentages to floats
+            if df[col].str.contains('%').any():
+                df[col] = df[col].str.rstrip('%').astype('float') / 100.0
+    return df
+
 def perform_task(df, task, plot_height, plot_width):
     if task == 'Show First Rows':
         st.write(df.head())
@@ -89,7 +98,10 @@ def main():
         else:
             st.error("This file type isn't supported.")
             return
-        
+
+        # Clean the data
+        df = clean_data(df)
+
         st.markdown("## Uploaded Data")
         st.write(df)
 

@@ -2,8 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 
-
-
 def perform_task(df, task, plot_height, plot_width):
     if task == 'Show First Rows':
         st.write(df.head())
@@ -25,7 +23,6 @@ def perform_task(df, task, plot_height, plot_width):
         st.write('Cleaned Data:')
         st.write(df)
     elif task in ['Plot Bar Graph', 'Plot Line Graph']:
-    try:
         columns_to_select = st.multiselect("Choose two columns", df.columns, default=df.columns[:2])
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns.")
@@ -33,17 +30,27 @@ def perform_task(df, task, plot_height, plot_width):
             if pd.api.types.is_numeric_dtype(df[columns_to_select[0]].iloc[0]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]].iloc[0]):
                 kind = 'bar' if task == 'Plot Bar Graph' else 'line'
                 fig, ax = plt.subplots(figsize=(plot_width, plot_height))
-                df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
-                plt.xlabel(columns_to_select[0])
-                plt.ylabel(columns_to_select[1])
-                plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
-                st.pyplot(fig)
+                try:
+                    df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+                    plt.xlabel(columns_to_select[0])
+                    plt.ylabel(columns_to_select[1])
+                    plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
+                    st.pyplot(fig)
+                except Exception as e:
+                    st.error(f"An error occurred: {str(e)}")
             else:
                 st.warning("Both selected columns must be numeric for plotting.")
-    except Exception as e:
-        st.error(f"An error occurred: {str(e)}")
-
-
+    elif task == 'Compare Two Columns':
+        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
+        if len(columns_to_select) != 2:
+            st.warning("Please select exactly two columns for comparison.")
+        else:
+            fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+            df.plot(kind='scatter', x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+            plt.title(f"Comparison between {columns_to_select[0]} and {columns_to_select[1]}")
+            st.pyplot(fig)
+    else:
+        st.error(f"Command '{task}' not recognized.")
 
 def main():
     st.set_page_config(layout='wide', initial_sidebar_state='expanded')

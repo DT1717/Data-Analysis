@@ -23,25 +23,22 @@ def perform_task(df, task, plot_height, plot_width):
         st.write('Cleaned Data:')
         st.write(df)
     elif task in ['Plot Bar Graph', 'Plot Line Graph']:
-        columns_to_select = st.multiselect("Choose two columns", df.columns, default=list(df.columns[:2]))
+        columns_to_select = st.multiselect("Choose two columns", df.columns, default=df.columns[:2])
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns.")
         else:
             if pd.api.types.is_numeric_dtype(df[columns_to_select[0]]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]]):
                 kind = 'bar' if task == 'Plot Bar Graph' else 'line'
                 fig, ax = plt.subplots(figsize=(plot_width, plot_height))
-                try:
-                    df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
-                    plt.xlabel(columns_to_select[0])
-                    plt.ylabel(columns_to_select[1])
-                    plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
-                    st.pyplot(fig)
-                except Exception as e:
-                    st.error(f"An error occurred: {str(e)}")
+                df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+                plt.xlabel(columns_to_select[0])
+                plt.ylabel(columns_to_select[1])
+                plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
+                st.pyplot(fig)
             else:
                 st.warning("Both selected columns must be numeric for plotting.")
     elif task == 'Compare Two Columns':
-        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=list(df.columns[:2]))
+        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns for comparison.")
         else:
@@ -66,7 +63,7 @@ def main():
 
     st.title("Data Analysis App")
     st.markdown("""
-    This Web App is a tool for carrying out fundamental data analysis operations on a CSV or Excel file, it is meant to speed up the process.
+    This Web App is a tool for carrying out fundamental data analysis operations on a CSV or Excel file, it is meant to speed up the process.
     You can upload your data and then choose or enter a command to carry out several actions. 
     In the case of Excel files with multiple sheets you can select the sheet you would like to analyse.
     """)
@@ -74,10 +71,24 @@ def main():
     uploaded_file = st.file_uploader("Upload CSV or Excel file", type=["csv", "xlsx"])
 
     if uploaded_file is not None:
-        try:
-            df = pd.read_csv(uploaded_file)
-        except Exception as e:
-            df = pd.read_excel(uploaded_file)
+        file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
+        st.write(file_details)
+        
+        if "csv" in uploaded_file.type:
+            try:
+                df = pd.read_csv(uploaded_file)
+            except UnicodeDecodeError:
+                st.error("This CSV file isn't UTF-8 encoded.")
+                return
+        elif "excel" in uploaded_file.type:
+            try:
+                df = pd.read_excel(uploaded_file)
+            except ValueError:
+                st.error("This file isn't a recognized Excel file.")
+                return
+        else:
+            st.error("This file type isn't supported.")
+            return
         
         st.markdown("## Uploaded Data")
         st.write(df)

@@ -23,11 +23,11 @@ def perform_task(df, task, plot_height, plot_width):
         st.write('Cleaned Data:')
         st.write(df)
     elif task in ['Plot Bar Graph', 'Plot Line Graph']:
-        columns_to_select = st.multiselect("Choose two columns", df.columns, default=df.columns[:2])
+        columns_to_select = st.multiselect("Choose two columns", df.columns, default=list(df.columns[:2]))
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns.")
         else:
-            if pd.api.types.is_numeric_dtype(df[columns_to_select[0]].iloc[0]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]].iloc[0]):
+            if pd.api.types.is_numeric_dtype(df[columns_to_select[0]]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]]):
                 kind = 'bar' if task == 'Plot Bar Graph' else 'line'
                 fig, ax = plt.subplots(figsize=(plot_width, plot_height))
                 try:
@@ -41,7 +41,7 @@ def perform_task(df, task, plot_height, plot_width):
             else:
                 st.warning("Both selected columns must be numeric for plotting.")
     elif task == 'Compare Two Columns':
-        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
+        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=list(df.columns[:2]))
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns for comparison.")
         else:

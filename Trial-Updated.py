@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 
-def perform_task(df, task):
+def perform_task(df, task, plot_height, plot_width):
     if task == 'Show First Rows':
         st.write(df.head())
     elif task == 'Show Last Rows':
@@ -16,7 +16,7 @@ def perform_task(df, task):
     elif task == 'Show Missing Value Counts':
         st.write(df.isna().sum())
     elif task == 'Delete Rows With Missing Values':
-        missing_rows = df[df.isna().any(axis=1)]
+        missing_rows = df.loc[df.isna().any(axis=1), :]
         st.write('Deleted Rows:')
         st.write(missing_rows)
         df.dropna(inplace=True)
@@ -29,7 +29,7 @@ def perform_task(df, task):
         else:
             if pd.api.types.is_numeric_dtype(df[columns_to_select[0]]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]]):
                 kind = 'bar' if task == 'Plot Bar Graph' else 'line'
-                fig, ax = plt.subplots()
+                fig, ax = plt.subplots(figsize=(plot_width, plot_height))
                 df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
                 plt.xlabel(columns_to_select[0])
                 plt.ylabel(columns_to_select[1])
@@ -42,7 +42,7 @@ def perform_task(df, task):
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns for comparison.")
         else:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(plot_width, plot_height))
             df.plot(kind='scatter', x=columns_to_select[0], y=columns_to_select[1], ax=ax)
             plt.title(f"Comparison between {columns_to_select[0]} and {columns_to_select[1]}")
             st.pyplot(fig)
@@ -50,7 +50,17 @@ def perform_task(df, task):
         st.error(f"Command '{task}' not recognized.")
 
 def main():
+    st.set_page_config(layout='wide', initial_sidebar_state='expanded')
+    
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
     st.sidebar.header('Dashboard')
+    
+    st.sidebar.subheader('Graph parameters')
+    plot_height = st.sidebar.slider('Specify plot height', 200, 500, 250)
+    plot_width = st.sidebar.slider('Specify plot width', 200, 800, 400)
+
     st.title("Data Analysis App")
     st.markdown("""
     This Web App is a tool for carrying out fundamental data analysis operations on a CSV or Excel file, it is meant to speed up the process.
@@ -88,12 +98,12 @@ def main():
                  'Plot Line Graph', 'Compare Two Columns']
         st.markdown("## Choose an Analysis Task")
         task = st.selectbox("", tasks)
-        perform_task(df, task)
+        perform_task(df, task, plot_height, plot_width)
         
         st.markdown("## Enter a Custom Analysis Task")
         manual_task = st.text_input("")
         if manual_task:
-            perform_task(df, manual_task)
+            perform_task(df, manual_task, plot_height, plot_width)
 
 if __name__ == "__main__":
     main()

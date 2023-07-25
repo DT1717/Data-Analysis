@@ -38,7 +38,7 @@ def perform_task(df, task, plot_height, plot_width):
             default_columns = df.columns[:2].tolist()
         else:
             default_columns = df.columns.tolist()
-        columns_to_select = st.multiselect("Choose two columns", df.columns, default=default_columns)
+        columns_to_select = st.multiselect("Choose two columns", df.columns, default=default_columns, key=f'{task}_multiselect')
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns.")
         else:
@@ -53,7 +53,7 @@ def perform_task(df, task, plot_height, plot_width):
             else:
                 st.warning("Both selected columns must be numeric for plotting.")
     elif task == 'Compare Two Columns':
-        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
+        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2].tolist(), key='compare_two_columns_multiselect')
         if len(columns_to_select) != 2:
             st.warning("Please select exactly two columns for comparison.")
         else:
@@ -105,7 +105,7 @@ def main():
 
     if uploaded_files is not None and len(uploaded_files) > 0:
         dataframes = []
-        for file in uploaded_files:
+        for idx, file in enumerate(uploaded_files):
             file_details = {"FileName": file.name, "FileType": file.type, "FileSize": file.size}
             st.write(file_details)
 
@@ -123,12 +123,12 @@ def main():
             st.dataframe(df.head())
             
             tasks = ['Show First Rows', 'Show Last Rows', 'Show Columns', 'Show Dimensions', 'Show Summary', 'Show Missing Value Counts', 'Delete Rows With Missing Values', 'Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']
-            task = st.selectbox("What operation would you like to perform?", tasks)
+            task = st.selectbox("What operation would you like to perform?", tasks, key=f'task_selectbox_{idx}')
             
             perform_task(df, task, plot_height, plot_width)
             
-            file_format = st.selectbox("Choose file format for download", ['CSV', 'Excel'])
-            if st.button('Download Dataframe as CSV or Excel'):
+            file_format = st.selectbox("Choose file format for download", ['CSV', 'Excel'], key=f'download_format_selectbox_{idx}')
+            if st.button('Download Dataframe as CSV or Excel', key=f'download_button_{idx}'):
                 tmp_download_link = get_table_download_link(df, file_format)
                 st.markdown(tmp_download_link, unsafe_allow_html=True)
 

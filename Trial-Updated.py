@@ -13,21 +13,12 @@ def clean_data(df):
 def perform_task(df, task, plot_height, plot_width):
     # ... (same as before) ...
 
-# Add a dummy function inside compare_data to avoid the indentation error
-def dummy_compare_data():
-    pass
-
 def compare_data(df1, df2):
     st.markdown("## Data Comparison")
     st.write("Uploaded Data 1:")
     st.write(df1)
     st.write("Uploaded Data 2:")
     st.write(df2)
-
-    # Add comparison logic here as needed
-    # For example, you can compare summary statistics, visualize both datasets, etc.
-    # You can also call the dummy_compare_data() function here to avoid the indentation error
-    # dummy_compare_data()
 
 def save_data(df, file_name):
     df.to_csv(file_name, index=False)

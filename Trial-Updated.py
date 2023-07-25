@@ -118,6 +118,16 @@ def main():
             else:
                 st.error("File type not supported.")
                 continue
+
+        try:
+    df = pd.read_csv(file)
+except Exception as e:
+    st.error(f"Error reading file as CSV: {e}")
+    try:
+        df = pd.read_excel(file)
+    except Exception as e2:
+        st.error(f"Error reading file as Excel: {e2}")
+        continue
             
             df = clean_data(df)
             dataframes.append(df)

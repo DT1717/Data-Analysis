@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import base64
+from io import BytesIO
 
 # section 2
 def clean_data(df):
@@ -85,12 +86,12 @@ def get_table_download_link(df, file_format):
 
 def main():
     st.set_page_config(layout='wide', initial_sidebar_state='expanded')
-    
+
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
     st.sidebar.header('Dashboard')
-    
+
     st.sidebar.subheader('Graph parameters')
     plot_height = st.sidebar.slider('Specify plot height', 2.0, 5.0, 2.5)  # Adjusted range
     plot_width = st.sidebar.slider('Specify plot width', 2.0, 8.0, 4.0)  # Adjusted range
@@ -111,24 +112,18 @@ def main():
             file_details = {"FileName": file.name, "FileType": file.type, "FileSize": file.size}
             st.write(file_details)
 
-            if file.type == "application/vnd.ms-excel":
-                df = pd.read_csv(file)
-            elif file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-                df = pd.read_excel(file)
-            else:
-                st.error("File type not supported.")
+            try:
+                if file.type == "application/vnd.ms-excel":
+                    df = pd.read_csv(file)
+                elif file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                    df = pd.read_excel(file)
+                else:
+                    st.error("File type not supported.")
+                    continue
+            except Exception as e:
+                st.error(f"Error reading file: {e}")
                 continue
 
-        try:
-    df = pd.read_csv(file)
-except Exception as e:
-    st.error(f"Error reading file as CSV: {e}")
-    try:
-        df = pd.read_excel(file)
-    except Exception as e2:
-        st.error(f"Error reading file as Excel: {e2}")
-        continue
-            
             df = clean_data(df)
             dataframes.append(df)
 

@@ -1,11 +1,9 @@
-# section 1 
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import base64
 from io import BytesIO
 
-# section 2
 def clean_data(df):
     df = df.apply(pd.to_numeric, errors='coerce')  # Convert all columns to numeric
     df = df.dropna(how='all')  # Remove rows where all values are NaN
@@ -86,17 +84,16 @@ def get_table_download_link(df, file_format):
 
 def main():
     st.set_page_config(layout='wide', initial_sidebar_state='expanded')
-
+    
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
     st.sidebar.header('Dashboard')
-
+    
     st.sidebar.subheader('Graph parameters')
     plot_height = st.sidebar.slider('Specify plot height', 2.0, 5.0, 2.5)  # Adjusted range
     plot_width = st.sidebar.slider('Specify plot width', 2.0, 8.0, 4.0)  # Adjusted range
 
-    # section 3
     st.title("Data Analysis App")
     st.markdown("""
     This Web App is a tool for carrying out fundamental data analysis operations on a CSV or Excel file, it is meant to speed up the process.
@@ -112,16 +109,12 @@ def main():
             file_details = {"FileName": file.name, "FileType": file.type, "FileSize": file.size}
             st.write(file_details)
 
-            try:
-                if file.type == "application/vnd.ms-excel":
-                    df = pd.read_csv(file)
-                elif file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-                    df = pd.read_excel(file)
-                else:
-                    st.error("File type not supported.")
-                    continue
-            except Exception as e:
-                st.error(f"Error reading file: {e}")
+            if file.type == "text/csv":
+                df = pd.read_csv(file)
+            elif file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                df = pd.read_excel(file)
+            else:
+                st.error("File type not supported.")
                 continue
 
             df = clean_data(df)
@@ -143,6 +136,6 @@ def main():
             df1, df2 = dataframes[0], dataframes[1]
             if st.button('Compare'):
                 compare_data(df1, df2)
-                
+
 if __name__ == '__main__':
     main()

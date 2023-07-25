@@ -3,7 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import base64
-import io
 
 # section 2
 def clean_data(df):
@@ -12,27 +11,78 @@ def clean_data(df):
     df = df.dropna(axis=1, how='all')  # Remove columns where all values are NaN
     return df
 
-def harmonize_dataframes(df1, df2):
-    df1 = df1.reindex(sorted(df1.columns), axis=1)
-    df2 = df2.reindex(sorted(df2.columns), axis=1)
-    shared_columns = set(df1.columns).intersection(df2.columns)
-    return df1[shared_columns], df2[shared_columns]
-
 def compare_data(df1, df2):
-    df1, df2 = harmonize_dataframes(df1, df2)
     return df1.compare(df2)
 
-# section 3
-def download_link(object_to_download, download_filename, download_link_text):
-    if isinstance(object_to_download,pd.DataFrame):
-        object_to_download = object_to_download.to_csv(index=False)
+def perform_task(df, task, plot_height, plot_width):
+    if task == 'Show First Rows':
+        st.write(df.head())
+    elif task == 'Show Last Rows':
+        st.write(df.tail())
+    elif task == 'Show Columns':
+        st.write(df.columns.to_list())
+    elif task == 'Show Dimensions':
+        st.write(df.shape)
+    elif task == 'Show Summary':
+        st.write(df.describe())
+    elif task == 'Show Missing Value Counts':
+        st.write(df.isna().sum())
+    elif task == 'Delete Rows With Missing Values':
+        missing_rows = df.loc[df.isna().any(axis=1), :]
+        st.write('Deleted Rows:')
+        st.write(missing_rows)
+        df.dropna(inplace=True)
+        st.write('Cleaned Data:')
+        st.write(df)
+    elif task in ['Plot Bar Graph', 'Plot Line Graph']:
+        if len(df.columns) >= 2:
+            default_columns = df.columns[:2].tolist()
+        else:
+            default_columns = df.columns.tolist()
+        columns_to_select = st.multiselect("Choose two columns", df.columns, default=default_columns)
+        if len(columns_to_select) != 2:
+            st.warning("Please select exactly two columns.")
+        else:
+            if pd.api.types.is_numeric_dtype(df[columns_to_select[0]]) and pd.api.types.is_numeric_dtype(df[columns_to_select[1]]):
+                kind = 'bar' if task == 'Plot Bar Graph' else 'line'
+                fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+                df.plot(kind=kind, x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+                plt.xlabel(columns_to_select[0])
+                plt.ylabel(columns_to_select[1])
+                plt.title(f"{kind.capitalize()} Graph for {columns_to_select[0]} vs {columns_to_select[1]}")
+                st.pyplot(fig)
+            else:
+                st.warning("Both selected columns must be numeric for plotting.")
+    elif task == 'Compare Two Columns':
+        columns_to_select = st.multiselect("Choose two columns for comparison", df.columns, default=df.columns[:2])
+        if len(columns_to_select) != 2:
+            st.warning("Please select exactly two columns for comparison.")
+        else:
+            fig, ax = plt.subplots(figsize=(plot_width, plot_height))
+            df.plot(kind='scatter', x=columns_to_select[0], y=columns_to_select[1], ax=ax)
+            plt.title(f"Comparison between {columns_to_select[0]} and {columns_to_select[1]}")
+            st.pyplot(fig)
+    else:
+        st.error(f"Command '{task}' not recognized.")
 
-    b64 = base64.b64encode(object_to_download.encode()).decode()
-    return f'<a href="data:file/txt;base64,{b64}" download="{download_filename}">{download_link_text}</a>'
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, sheet_name='Sheet1')
+    writer.save()
+    processed_data = output.getvalue()
+    return processed_data
 
-# ... (continue as before)
+def get_table_download_link(df, file_format):
+    if file_format == 'CSV':
+        csv = df.to_csv(index=False)
+        b64 = base64.b64encode(csv.encode()).decode()  
+        return f'<a href="data:file/csv;base64,{b64}" download="data.csv">Download CSV File</a>'
+    elif file_format == 'Excel':
+        val = to_excel(df)
+        b64 = base64.b64encode(val).decode()  
+        return f'<a href="data:application/octet-stream;base64,{b64}" download="data.xlsx">Download Excel File</a>'
 
-# section 4
 def main():
     st.set_page_config(layout='wide', initial_sidebar_state='expanded')
     
@@ -45,7 +95,7 @@ def main():
     plot_height = st.sidebar.slider('Specify plot height', 2.0, 5.0, 2.5)  # Adjusted range
     plot_width = st.sidebar.slider('Specify plot width', 2.0, 8.0, 4.0)  # Adjusted range
 
-# section 5
+    # section 3
     st.title("Data Analysis App")
     st.markdown("""
     This Web App is a tool for carrying out fundamental data analysis operations on a CSV or Excel file, it is meant to speed up the process.
@@ -53,62 +103,41 @@ def main():
     In the case of Excel files with multiple sheets you can select the sheet you would like to analyse.
     """)
 
-    uploaded_files = st.file_uploader("Upload CSV or Excel files", type=["csv", "xlsx"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Upload CSV or Excel file", type=["csv", "xlsx"], accept_multiple_files=True)
 
-    dfs = []
-    for uploaded_file in uploaded_files:
-        file_details = {"FileName": uploaded_file.name, "FileType": uploaded_file.type, "FileSize": uploaded_file.size}
-        st.write(file_details)
-        
-        if "csv" in uploaded_file.type:
-            try:
-                df = pd.read_csv(uploaded_file)
-                dfs.append(df)
-            except UnicodeDecodeError:
-                st.error("This CSV file isn't UTF-8 encoded.")
-                return
-        elif "excel" in uploaded_file.type:
-            try:
-                df = pd.read_excel(uploaded_file)
-                dfs.append(df)
-            except ValueError:
-                st.error("This file isn't a recognized Excel file.")
-                return
-        else:
-            st.error("This file type isn't supported.")
-            return
+    if uploaded_files is not None and len(uploaded_files) > 0:
+        dataframes = []
+        for file in uploaded_files:
+            file_details = {"FileName": file.name, "FileType": file.type, "FileSize": file.size}
+            st.write(file_details)
 
-    if len(dfs) == 2:
-        df_comparison = compare_data(dfs[0], dfs[1])
-        st.markdown("## Comparison Between Uploaded Files")
-        st.write(df_comparison)
+            if file.type == "application/vnd.ms-excel":
+                df = pd.read_csv(file)
+            elif file.type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+                df = pd.read_excel(file)
+            else:
+                st.error("File type not supported.")
+                continue
+            
+            df = clean_data(df)
+            dataframes.append(df)
 
-        if st.button('Download comparison data as CSV'):
-            tmp_download_link = download_link(df_comparison, 'comparison.csv', 'Click here to download your data!')
-            st.markdown(tmp_download_link, unsafe_allow_html=True)
+            st.dataframe(df.head())
+            
+            tasks = ['Show First Rows', 'Show Last Rows', 'Show Columns', 'Show Dimensions', 'Show Summary', 'Show Missing Value Counts', 'Delete Rows With Missing Values', 'Plot Bar Graph', 'Plot Line Graph', 'Compare Two Columns']
+            task = st.selectbox("What operation would you like to perform?", tasks)
+            
+            perform_task(df, task, plot_height, plot_width)
+            
+            file_format = st.selectbox("Choose file format for download", ['CSV', 'Excel'])
+            if st.button('Download Dataframe as CSV or Excel'):
+                tmp_download_link = get_table_download_link(df, file_format)
+                st.markdown(tmp_download_link, unsafe_allow_html=True)
 
-# section 6
-    for df in dfs:
-        df = clean_data(df)
-
-        st.markdown("## Uploaded Data")
-        st.write(df)
-
-        tasks = ['Show First Rows', 'Show Last Rows', 'Show Columns', 'Show Dimensions', 'Show Summary',
-                 'Show Missing Value Counts', 'Delete Rows With Missing Values', 'Plot Bar Graph',
-                 'Plot Line Graph', 'Compare Two Columns']
-        st.markdown("## Choose an Analysis Task")
-        task = st.selectbox("", tasks)
-        perform_task(df, task, plot_height, plot_width)
-
-        st.markdown("## Enter a Custom Analysis Task")
-        manual_task = st.text_input("")
-        if manual_task:
-            perform_task(df, manual_task, plot_height, plot_width)
-
-        if st.button('Download data as CSV'):
-            tmp_download_link = download_link(df, 'download.csv', 'Click here to download your data!')
-            st.markdown(tmp_download_link, unsafe_allow_html=True)
-
-if __name__ == "__main__":
+        if len(dataframes) > 1:
+            df1, df2 = dataframes[0], dataframes[1]
+            if st.button('Compare'):
+                compare_data(df1, df2)
+                
+if __name__ == '__main__':
     main()
